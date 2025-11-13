@@ -3,7 +3,7 @@
     "displayName": "Controller Support",
     "description": "Enables individual game mapping of controller to keyboard inputs",
     "author": "Flashpoint Archive",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "main": "./dist/extension.js",
     "icon": "icon.svg",
     "artifactName": "controller-support.zip",

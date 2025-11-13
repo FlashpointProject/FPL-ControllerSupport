@@ -8,13 +8,13 @@ export default function Initializer() {
   useEffect(() => {
     dispatch(addGameSidebarComponent({
       section: 'bottom',
-      name: 'core_controller/ControllerSupport'
+      name: 'controller_support/ControllerSupport'
     }));
 
     return () => {
       dispatch(removeGameSidebarComponent({
         section: 'bottom',
-        name: 'core_controller/ControllerSupport'
+        name: 'controller_support/ControllerSupport'
       }));
     };
   }, [dispatch]);
