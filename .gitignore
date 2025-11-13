@@ -1,0 +1,9 @@
+dist/
+static/*.js
+static/mf*.json
+static/*mf-types*
+static/.dev-server
+node_modules/
+package/
+Controller Configs/
+AntiMicroX/bin/antimicrox_settings.ini

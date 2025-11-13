@@ -1,0 +1,85 @@
+name: Version-based Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.package_version.outputs.version }}
+      should_release: ${{ steps.check_release.outputs.should_release }}
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Get package version
+      id: package_version
+      run: |
+        VERSION=$(node -p "require('./package.json').version")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Check if release exists
+      id: check_release
+      run: |
+        if gh release view ${{ steps.package_version.outputs.version }} >/dev/null 2>&1; then
+          echo "Release ${{ steps.package_version.outputs.version }} already exists"
+          echo "should_release=false" >> $GITHUB_OUTPUT
+        else
+          echo "Release ${{ steps.package_version.outputs.version }} does not exist"
+          echo "should_release=true" >> $GITHUB_OUTPUT
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Create release
+      id: create_release
+      if: steps.check_release.outputs.should_release == 'true'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.package_version.outputs.version }}
+        name: ${{ github.event.repository.name }} ${{ steps.package_version.outputs.version }}
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  upload-release:
+    runs-on: ubuntu-latest
+    needs: create-release
+    if: needs.create-release.outputs.should_release == 'true'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        
+    - run: npm install
+
+    - name: Get artifact name
+      id: artifact_info
+      run: |
+        ARTIFACT_NAME=$(node -p "require('./package.json').artifactName")
+        echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+    
+    - name: Build and Package Release
+      run: |
+        npm run package
+
+    - name: Release Extension Package
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./${{ steps.artifact_info.outputs.artifact_name }}
+        asset_name: ${{ steps.artifact_info.outputs.artifact_name }}
+        asset_content_type: application/zip
