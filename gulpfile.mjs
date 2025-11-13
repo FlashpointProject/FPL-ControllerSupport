@@ -15,7 +15,7 @@ const filesToCopy = [
     'default.gamecontroller.amgp'
 ];
 
-async function buildTask(done) {
+async function buildTask() {
     // Build main extension (Node.js)
     const nodeBuild = esbuild.build({
         bundle: true,
@@ -27,15 +27,14 @@ async function buildTask(done) {
 
     const config = await loadConfig('./rslib.config.ts');
     
-    Promise.all([nodeBuild, rslibBuild({
+    await Promise.all([nodeBuild, rslibBuild({
         ...config.content,
         mode: 'development'
     })])
     .catch(console.error)
-    .finally(done);
 }
 
-async function watchTask(done) {
+async function watchTask() {
     const ctx = await esbuild.context({
         bundle: true,
         entryPoints: ['./src/extension.ts'],
@@ -51,9 +50,8 @@ async function watchTask(done) {
         watch: true
     });
 
-    return Promise.all([ctx.watch(), renderer])
-    .catch(console.error)
-    .finally(done);
+    await Promise.all([ctx.watch(), renderer])
+    .catch(console.error);
 }
 
 function clean(cb) {
@@ -92,7 +90,7 @@ function packagePathTask(src, filter) {
 }
 
 function packageExtTask() {
-    return gulp.src('package/**/*').pipe(zip(packageJson.artifactName)).pipe(gulp.dest('.'));
+    return gulp.src('package/**/*', { encoding: false }).pipe(zip(packageJson.artifactName)).pipe(gulp.dest('.'));
 }
 
 export const build = series(buildTask);
