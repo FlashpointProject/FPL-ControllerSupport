@@ -97,4 +97,4 @@ function packageExtTask() {
 
 export const build = series(buildTask);
 export const watch = series(watchTask);
-export const packageExt = series(clean, stage, packageExtTask);
+export const packageExt = series(clean, build, stage, packageExtTask);
